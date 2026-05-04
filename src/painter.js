@@ -2582,10 +2582,10 @@ Neo.Painter.prototype.pickColor = function (x, y) {
 
   if (this.current > 0) {
     if (a == 0 && (result == 0xffffff || this.getEmulationMode() < 2.16)) {
-      this.setToolByType(Neo.eraserTip.tools[Neo.eraserTip.mode]);
+      this.setToolByType(Neo.Painter.TOOLTYPE_ERASER);
     } else {
       if (Neo.eraserTip.selected) {
-        this.setToolByType(Neo.penTip.tools[Neo.penTip.mode]);
+        this.setToolByType(Neo.Painter.TOOLTYPE_PEN);
       }
     }
   }
