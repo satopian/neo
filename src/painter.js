@@ -872,12 +872,16 @@ Neo.Painter.prototype._stabilizer = function (e) {
   if (this.isMouseDown) {
     // 手ぶれ補正の強さ
     // 補正なし 0.0 最強 0.99
-    const level = Neo.stabiliz_level;
+    const level = Math.max(0, Math.min(Neo.stabiliz_level, 5));
     //手ぶれ補正のレベルを6段階に分けたテーブル
     //0で補正なし、5で最強
     // [0:無効, 1:0.55, 2:0.8, 3:0.85, 4:0.9, 5:0.96]
     const stabilityTable = [0.0, 0.55, 0.8, 0.85, 0.9, 0.96];
-    const stability = stabilityTable[Math.max(0, Math.min(level, 5))];
+    const stabilityLebel = stabilityTable[level];
+    //ブラシサイズが大きい時と拡大時は補正強度を下げる
+    const zoomModifier = this.zoom <= 1 ? 1 : 0.88;
+    const sizeModifier = this.lineWidth <= 8 ? 1 : 0.96;
+    const stability = stabilityLebel * zoomModifier * sizeModifier;
     const factor = 1.0 - stability;
 
     // stabilizedX が未定義なら現在の位置で初期化
@@ -2578,10 +2582,10 @@ Neo.Painter.prototype.pickColor = function (x, y) {
 
   if (this.current > 0) {
     if (a == 0 && (result == 0xffffff || this.getEmulationMode() < 2.16)) {
-      this.setToolByType(Neo.eraserTip.tools[Neo.eraserTip.mode]);
+      this.setToolByType(Neo.Painter.TOOLTYPE_ERASER);
     } else {
       if (Neo.eraserTip.selected) {
-        this.setToolByType(Neo.penTip.tools[Neo.penTip.mode]);
+        this.setToolByType(Neo.Painter.TOOLTYPE_PEN);
       }
     }
   }

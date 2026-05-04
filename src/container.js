@@ -13,7 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
       e.stopPropagation();
     },
     {
-      capture: true,
       passive: false,
     },
   );

@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
       e.stopPropagation();
     },
     {
+      capture: true,
       passive: false,
     },
   );
@@ -20,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 var Neo = function () {};
 
-Neo.version = "1.6.56";
+Neo.version = "1.6.54";
 Neo.painter = null;
 Neo.fullScreen = false;
 Neo.uploaded = false;
@@ -1691,7 +1692,7 @@ Neo.setStabilizLevel = function (level) {
   Neo.stabiliz_level = level;
 };
 
-"use strict";
+("use strict");
 
 Neo.dictionary = {
   ja: {},
@@ -1903,7 +1904,7 @@ Neo.translate = (function () {
   };
 })();
 
-"use strict";
+("use strict");
 
 Neo.Painter = function () {
   this._undoMgr = new Neo.UndoManager(50);
@@ -2289,6 +2290,7 @@ Neo.Painter.prototype._initCanvas = function (div, width, height) {
     container.onmouseout = function (e) {
       ref._rollOutHandler(e);
     };
+
     // 先にNeo.Buttonのtouchstart()がトリガーされる
     container.addEventListener(
       "mousedown", //pointerdownに変更するとここが先にトリガーされ、線幅を保存できなくなる
@@ -2781,12 +2783,14 @@ Neo.Painter.prototype._stabilizer = function (e) {
     //手ぶれ補正のレベルを6段階に分けたテーブル
     //0で補正なし、5で最強
     // [0:無効, 1:0.55, 2:0.8, 3:0.85, 4:0.9, 5:0.96]
-    const stabilityTable = [0.0, 0.55, 0.8, 0.85, 0.9, 0.96];
-    const stabilityLebel = stabilityTable[level];
-    //ブラシサイズが大きい時と拡大時は補正強度を下げる
-    const zoomModifier = this.zoom <= 1 ? 1 : 0.88;
-    const sizeModifier = this.lineWidth <= 8 ? 1 : 0.96;
-    const stability = stabilityLebel * zoomModifier * sizeModifier;
+    //等倍･縮小時の補正レベル
+    const stabilityTable1 = [0.0, 0.55, 0.8, 0.85, 0.9, 0.96];
+    const stability1 = stabilityTable1[level];
+    //拡大時の補正レベル
+    // [0:無効, 1:0.3, 2:0.5, 3:0.7, 4:0.8, 5:0.85]
+    const stabilityTable2 = [0.0, 0.35, 0.5, 0.7, 0.8, 0.85];
+    const stability2 = stabilityTable2[level];
+    const stability = this.zoom <= 1 ? stability1 : stability2;
     const factor = 1.0 - stability;
 
     // stabilizedX が未定義なら現在の位置で初期化
@@ -4487,10 +4491,10 @@ Neo.Painter.prototype.pickColor = function (x, y) {
 
   if (this.current > 0) {
     if (a == 0 && (result == 0xffffff || this.getEmulationMode() < 2.16)) {
-      this.setToolByType(Neo.Painter.TOOLTYPE_ERASER);
+      this.setToolByType(Neo.eraserTip.tools[Neo.eraserTip.mode]);
     } else {
       if (Neo.eraserTip.selected) {
-        this.setToolByType(Neo.Painter.TOOLTYPE_PEN);
+        this.setToolByType(Neo.penTip.tools[Neo.penTip.mode]);
       }
     }
   }
@@ -5101,7 +5105,7 @@ Neo.Painter.prototype.isDirty = function () {
   return this.dirty;
 };
 
-"use strict";
+("use strict");
 
 Neo.ToolBase = function () {};
 Neo.ToolBase.prototype.isDrag = false;
@@ -6581,7 +6585,7 @@ Neo.DummyTool.prototype.upMoveHandler = function (oe) {};
 Neo.DummyTool.prototype.rollOverHandler = function (oe) {};
 Neo.DummyTool.prototype.rollOutHandler = function (oe) {};
 
-"use strict";
+("use strict");
 
 Neo.CommandBase = function () {};
 Neo.CommandBase.prototype.data;
@@ -6688,7 +6692,7 @@ Neo.CopyrightCommand.prototype.execute = function () {
   }
 };
 
-"use strict";
+("use strict");
 
 /*
   -----------------------------------------------------------------------
@@ -7803,7 +7807,7 @@ Neo.getLineCount = function () {
   return Neo.painter._actionMgr._items.length;
 };
 
-"use strict";
+("use strict");
 
 Neo.getModifier = function (e) {
   if (e.shiftKey) {

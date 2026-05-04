@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
       e.stopPropagation();
     },
     {
+      capture: true,
       passive: false,
     },
   );
@@ -20,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 var Neo = function () {};
 
-Neo.version = "1.6.56";
+Neo.version = "1.6.55";
 Neo.painter = null;
 Neo.fullScreen = false;
 Neo.uploaded = false;
@@ -2096,7 +2097,8 @@ Neo.Painter.prototype.build = function (div, width, height) {
 };
 
 Neo.Painter.prototype.setTool = function (tool) {
-  if (this.tool && this.tool.saveStates) this.tool.saveStates();
+  console.log(tool, this.tool);
+  if (tool && tool.saveStates) tool.saveStates();
 
   //テキストツール以外のツールに切り替えるときは、テキストツールを終了する
   if (tool !== this.textTool) {
@@ -4486,11 +4488,11 @@ Neo.Painter.prototype.pickColor = function (x, y) {
   this.setColor(result);
 
   if (this.current > 0) {
-    if (a == 0 && (result == 0xffffff || this.getEmulationMode() < 2.16)) {
+    if (a == 0 && result == 0xffffff && this.getEmulationMode() < 2.16) {
       this.setToolByType(Neo.Painter.TOOLTYPE_ERASER);
     } else {
       if (Neo.eraserTip.selected) {
-        this.setToolByType(Neo.Painter.TOOLTYPE_PEN);
+        this.setToolByType(Neo.penTip.tools[Neo.penTip.mode]);
       }
     }
   }
@@ -5211,6 +5213,7 @@ Neo.ToolBase.prototype.getReserve = function () {
 Neo.ToolBase.prototype.loadStates = function () {
   var reserve = this.getReserve();
   if (reserve) {
+    console.log("loadStates", reserve.size);
     Neo.painter.lineWidth = reserve.size;
     Neo.updateUI();
   }
@@ -5219,6 +5222,7 @@ Neo.ToolBase.prototype.loadStates = function () {
 Neo.ToolBase.prototype.saveStates = function () {
   var reserve = this.getReserve();
   if (reserve) {
+    console.log("saveStates", Neo.painter.lineWidth);
     reserve.size = Neo.painter.lineWidth;
   }
 };
