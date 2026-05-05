@@ -331,7 +331,7 @@ Neo.Painter.prototype._initCanvas = function (div, width, height) {
   this.zoomX = width * 0.5;
   this.zoomY = height * 0.5;
 
-  this.securityTimer = new Date() - 0;
+  this.securityTimer = Date.now();
   this.securityCount = 0;
 
   for (var i = 0; i < 2; i++) {
@@ -532,7 +532,7 @@ Neo.Painter.prototype._initInputText = function () {
   }
 
   text.id = "neo-inputText";
-  text.setAttribute("contentEditable", true);
+  text.setAttribute("contentEditable", "true");
   text.spellcheck = false;
   text.className = "inputText";
   text.innerHTML = "";
@@ -936,7 +936,7 @@ Neo.Painter.prototype._updateMousePosition = function (e) {
   /*
      this.slowX = this.slowX * 0.8 + this.mouseX * 0.2;
      this.slowY = this.slowY * 0.8 + this.mouseY * 0.2;
-     var now = new Date().getTime();
+     var now = Date.now();
      if (this.stab) {
      var pause = this.stab[3];
      if (pause) {
@@ -1241,6 +1241,9 @@ Neo.Painter.prototype.getImage = function (imageWidth, imageHeight) {
   var pngCanvasCtx = pngCanvas.getContext("2d", {
     willReadFrequently: true,
   });
+  if (!pngCanvasCtx) {
+    return null;
+  }
   pngCanvasCtx.fillStyle = "#ffffff";
   pngCanvasCtx.fillRect(0, 0, imageWidth, imageHeight);
 
@@ -1275,6 +1278,10 @@ Neo.Painter.prototype.getImage = function (imageWidth, imageHeight) {
 
 Neo.Painter.prototype.getPNG = function () {
   var image = this.getImage();
+  if (!image) {
+    console.error("Failed to export image.");
+    return null;
+  }
   var dataURL = image.toDataURL("image/png");
   return this.dataURLtoBlob(dataURL);
 };
@@ -1299,6 +1306,10 @@ Neo.Painter.prototype.getThumbnail = function (type) {
     console.log("get thumbnail", thumbnailWidth, thumbnailHeight);
 
     var image = this.getImage(thumbnailWidth, thumbnailHeight);
+    if (!image) {
+      console.error("Failed to export image.");
+      return null;
+    }
     var dataURL = image.toDataURL("image/" + type);
     return this.dataURLtoBlob(dataURL);
   } else {
@@ -2442,6 +2453,9 @@ Neo.Painter.prototype.merge = function (layer, x, y, width, height) {
   y = Math.round(y);
   width = Math.round(width);
   height = Math.round(height);
+  var r = 0x00;
+  var g = 0x00;
+  var b = 0x00;
 
   var imageData = [];
   var buf32 = [];
@@ -2468,9 +2482,9 @@ Neo.Painter.prototype.merge = function (layer, x, y, width, height) {
 
     var a = a0 + a1 - a0 * a1;
     if (a > 0) {
-      var r = Math.floor((r1 * a1 + r0 * a0 * (1 - a1)) / a + 0.5);
-      var g = Math.floor((g1 * a1 + g0 * a0 * (1 - a1)) / a + 0.5);
-      var b = Math.floor((b1 * a1 + b0 * a0 * (1 - a1)) / a + 0.5);
+      r = Math.floor((r1 * a1 + r0 * a0 * (1 - a1)) / a + 0.5);
+      g = Math.floor((g1 * a1 + g0 * a0 * (1 - a1)) / a + 0.5);
+      b = Math.floor((b1 * a1 + b0 * a0 * (1 - a1)) / a + 0.5);
     }
     buf8[src][index + 0] = 0;
     buf8[src][index + 1] = 0;
@@ -2555,8 +2569,8 @@ Neo.Painter.prototype.pickColor = function (x, y) {
   var r = 0xff,
     g = 0xff,
     b = 0xff,
-    a;
-
+    a = 0,
+    result = 0xffffff;
   x = Math.floor(x);
   y = Math.floor(y);
   if (x >= 0 && x < this.canvasWidth && y >= 0 && y < this.canvasHeight) {
@@ -2567,7 +2581,7 @@ Neo.Painter.prototype.pickColor = function (x, y) {
         var buf32 = new Uint32Array(imageData.data.buffer);
         var buf8 = new Uint8ClampedArray(imageData.data.buffer);
 
-        var a = buf8[3] / 255.0;
+        a = buf8[3] / 255.0;
         r = r * (1.0 - a) + buf8[2] * a;
         g = g * (1.0 - a) + buf8[1] * a;
         b = b * (1.0 - a) + buf8[0] * a;
@@ -2576,7 +2590,7 @@ Neo.Painter.prototype.pickColor = function (x, y) {
     r = Math.max(Math.min(Math.round(r), 255), 0);
     g = Math.max(Math.min(Math.round(g), 255), 0);
     b = Math.max(Math.min(Math.round(b), 255), 0);
-    var result = r | (g << 8) | (b << 16);
+    result = r | (g << 8) | (b << 16);
   }
   this.setColor(result);
 
@@ -3003,7 +3017,7 @@ Neo.Painter.prototype.loadSession = function (callback) {
 
 Neo.Painter.prototype.saveSession = function () {
   if (Neo.storage) {
-    Neo.storage.setItem("timestamp", new Date().getTime());
+    Neo.storage.setItem("timestamp", Date.now());
     Neo.storage.setItem("layer0", this.canvas[0].toDataURL("image/png"));
     Neo.storage.setItem("layer1", this.canvas[1].toDataURL("image/png"));
   }

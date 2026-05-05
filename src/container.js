@@ -166,7 +166,7 @@ Neo.init2 = function () {
       : "描きかけの画像があります。動画の読み込みを中止して復元しますか？";
 
   let storageTimestamp = Neo.storage.getItem("timestamp");
-  const nowTimestamp = new Date().getTime();
+  const nowTimestamp = Date.now();
 
   if (
     Number.isInteger(Number(storageTimestamp)) &&
@@ -1295,7 +1295,7 @@ Neo.submit = function (board, blob, thumbnail, thumbnail2) {
   }
 
   var count = Neo.painter.securityCount;
-  var timer = new Date() - Neo.painter.securityTimer;
+  var timer = Date.now() - Neo.painter.securityTimer;
   if (Neo.config.send_header_count == "true") {
     headerString = "count=" + count + "&" + headerString;
   }
