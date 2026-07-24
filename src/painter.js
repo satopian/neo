@@ -1371,10 +1371,10 @@ Neo.Painter = class {
 
   /**
    * データ送信
-   * @param {string} boardURL 掲示板のURL
+   * @param {string} baseURL 基準ディレクトリパス（URL形式、末尾は "/"）
    * @returns
    */
-  submit(boardURL) {
+  submit(baseURL) {
     if (Neo.isAnimation) {
       // neo_save_layers
       var items = this._actionMgr._items;
@@ -1407,7 +1407,7 @@ Neo.Painter = class {
       console.error("Failed to get PNG data. Submission aborted.");
       return;
     }
-    Neo.submit(boardURL, png, thumbnail2, thumbnail);
+    Neo.submit(baseURL, png, thumbnail2, thumbnail);
   }
 
   useThumbnail() {
@@ -1465,7 +1465,7 @@ Neo.Painter = class {
     const width = imageWidth ?? canvasWidth;
     const height = imageHeight ?? canvasHeight;
 
-    var pngCanvas = document.createElement("canvas");
+    const pngCanvas = document.createElement("canvas");
     pngCanvas.width = width;
     pngCanvas.height = height;
     var pngCanvasCtx = pngCanvas.getContext("2d", {
@@ -1557,7 +1557,7 @@ Neo.Painter = class {
 
       console.log("get thumbnail", thumbnailWidth, thumbnailHeight);
 
-      var image = this.getImage(thumbnailWidth, thumbnailHeight);
+      const image = this.getImage(thumbnailWidth, thumbnailHeight);
       if (!image) {
         console.error("Failed to export image.");
         return null;
@@ -1731,10 +1731,10 @@ Neo.Painter = class {
    * @returns {number[]} [左上のX, 左上のY, 幅, 高さ]
    */
   getBound(x0, y0, x1, y1, r) {
-    var left = Math.floor(x0 < x1 ? x0 : x1);
-    var top = Math.floor(y0 < y1 ? y0 : y1);
-    var width = Math.ceil(Math.abs(x0 - x1));
-    var height = Math.ceil(Math.abs(y0 - y1));
+    let left = Math.floor(x0 < x1 ? x0 : x1);
+    let top = Math.floor(y0 < y1 ? y0 : y1);
+    let width = Math.ceil(Math.abs(x0 - x1));
+    let height = Math.ceil(Math.abs(y0 - y1));
     r = Math.ceil(r + 1);
 
     if (!r) {
@@ -1820,7 +1820,7 @@ Neo.Painter = class {
    * @returns {number} 0.0〜1.0 の範囲に正規化された描画用アルファ値
    */
   getAlpha(type) {
-    var a1 = this._currentColor[3] / 255.0; //this.alpha;
+    let a1 = this._currentColor[3] / 255.0; //this.alpha;
 
     switch (type) {
       case Neo.Painter.ALPHATYPE_PEN:
@@ -1861,14 +1861,14 @@ Neo.Painter = class {
    *  内部プロパティ(_currentColor等)に確定させる
    * */
   prepareDrawing() {
-    var r = parseInt(this.foregroundColor.slice(1, 3), 16);
-    var g = parseInt(this.foregroundColor.slice(3, 5), 16);
-    var b = parseInt(this.foregroundColor.slice(5, 7), 16);
-    var a = Math.floor(this.alpha * 255);
+    const r = parseInt(this.foregroundColor.slice(1, 3), 16);
+    const g = parseInt(this.foregroundColor.slice(3, 5), 16);
+    const b = parseInt(this.foregroundColor.slice(5, 7), 16);
+    const a = Math.floor(this.alpha * 255);
 
-    var maskR = parseInt(this.maskColor.slice(1, 3), 16);
-    var maskG = parseInt(this.maskColor.slice(3, 5), 16);
-    var maskB = parseInt(this.maskColor.slice(5, 7), 16);
+    const maskR = parseInt(this.maskColor.slice(1, 3), 16);
+    const maskG = parseInt(this.maskColor.slice(3, 5), 16);
+    const maskB = parseInt(this.maskColor.slice(5, 7), 16);
 
     this._currentColor = [r, g, b, a];
     this._currentMask = [maskR, maskG, maskB];
@@ -1905,7 +1905,7 @@ Neo.Painter = class {
       b0 = 0xff;
     }
 
-    var type = this._currentMaskType; //this.maskType;
+    let type = this._currentMaskType; //this.maskType;
 
     //TODO
     //いろいろ試したのですが半透明で描画するときの加算・逆加算を再現する方法がわかりません。
@@ -1966,8 +1966,8 @@ Neo.Painter = class {
    * @returns {void}
    */
   setPoint(buf8, bufWidth, x0, y0, left, top, type) {
-    var x = x0 - left;
-    var y = y0 - top;
+    const x = x0 - left;
+    const y = y0 - top;
 
     switch (type) {
       case Neo.Painter.LINETYPE_PEN:
@@ -2081,15 +2081,15 @@ Neo.Painter = class {
     x -= r0;
     y -= r0;
 
-    var index = (y * width + x) * 4;
+    let index = (y * width + x) * 4;
 
-    var shape = this._roundData[d];
-    var shapeIndex = 0;
+    const shape = this._roundData[d];
+    let shapeIndex = 0;
 
-    var r1 = this._currentColor[0];
-    var g1 = this._currentColor[1];
-    var b1 = this._currentColor[2];
-    var a1 = this.getAlpha(Neo.Painter.ALPHATYPE_BRUSH);
+    const r1 = this._currentColor[0];
+    const g1 = this._currentColor[1];
+    const b1 = this._currentColor[2];
+    const a1 = this.getAlpha(Neo.Painter.ALPHATYPE_BRUSH);
     if (a1 == 0) return;
 
     for (var i = 0; i < d; i++) {
@@ -2155,12 +2155,12 @@ Neo.Painter = class {
     var shapeIndex = 0;
     var index = (y * width + x) * 4;
 
-    var r = this._currentColor[0];
-    var g = this._currentColor[1];
-    var b = this._currentColor[2];
-    var a = this._currentColor[3];
+    const r = this._currentColor[0];
+    const g = this._currentColor[1];
+    const b = this._currentColor[2];
+    const a = this._currentColor[3];
 
-    var toneData = this.getToneData(a);
+    const toneData = this.getToneData(a);
 
     for (var i = 0; i < d; i++) {
       for (var j = 0; j < d; j++) {
@@ -2189,15 +2189,15 @@ Neo.Painter = class {
    * @returns {void}
    */
   setEraserPoint(buf8, width, x, y) {
-    var d = this._currentWidth;
-    var r0 = Math.floor(d / 2);
+    const d = this._currentWidth;
+    const r0 = Math.floor(d / 2);
     x -= r0;
     y -= r0;
 
-    var shape = this._roundData[d];
-    var shapeIndex = 0;
-    var index = (y * width + x) * 4;
-    var a = Math.floor(this._currentColor[3]); //this.alpha * 255);
+    const shape = this._roundData[d];
+    let shapeIndex = 0;
+    let index = (y * width + x) * 4;
+    const a = Math.floor(this._currentColor[3]); //this.alpha * 255);
 
     for (var i = 0; i < d; i++) {
       for (var j = 0; j < d; j++) {

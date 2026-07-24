@@ -113,8 +113,9 @@ Neo.SubmitCommand = class extends Neo.CommandBase {
     this.data = data;
   }
   execute() {
-    var board = location.href.replace(/[^/]*$/, "");
-    this.data.submit(board);
+    //基準ディレクトリパス（URL形式、末尾は "/"）
+    var baseURL = location.href.replace(/[^/]*$/, "");
+    this.data.submit(baseURL);
   }
 };
 

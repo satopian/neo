@@ -1514,26 +1514,27 @@ Neo.openURL = function (url) {
 };
 
 /**
- * @param {string}  boardURL
- * @param {string}  url
+ * @param {string} baseURL - 基準ディレクトリパス（URL形式、末尾は "/"）
+ * @param {string} url - 完全なURL、または baseURL からの相対パス（クエリ文字列を含む場合がある）
+ * @returns {string} - 完全なURL（ディレクトリとは限らない。クエリ文字列を含む場合がある）
  */
-Neo.getAbsoluteURL = function (boardURL, url) {
+Neo.getAbsoluteURL = function (baseURL, url) {
   if (url && (url.indexOf("://") > 0 || url.indexOf("//") === 0)) {
     return url;
   } else {
-    return boardURL + url;
+    return baseURL + url;
   }
 };
 
 /**
  * 描画されたイラストデータ（および各種サムネイル、動画データ）をサーバーに投稿する
- * @param {string} boardURL - 掲示板のURL
+ * @param {string} baseURL - 基準ディレクトリパス（URL形式、末尾は "/"）
  * @param {Blob} blob - 投稿するメインのイラスト画像データ (PNG等)
  * @param {Blob|null} thumbnail - 通常のサムネイル画像データ（無い場合は null）
  * @param {Blob|null} thumbnail2 - アニメーション動画（PCH）データ（無い場合は null）
  */
-Neo.submit = function (boardURL, blob, thumbnail, thumbnail2) {
-  let url = Neo.getAbsoluteURL(boardURL, Neo.config.url_save);
+Neo.submit = function (baseURL, blob, thumbnail, thumbnail2) {
+  let url = Neo.getAbsoluteURL(baseURL, Neo.config.url_save);
   var headerString = Neo.str_header || "";
   //@ts-ignore
   if (document["paintBBSCallback"]) {
@@ -1580,8 +1581,10 @@ Neo.submit = function (boardURL, blob, thumbnail, thumbnail2) {
     }
     if (securityError && Neo.config.security_url) {
       if (Neo.config.security_post == "true") {
+        //セキュリティ違反時に指定URLに投稿する
         url = Neo.config.security_url;
       } else {
+        //セキュリティ違反時に指定URLに飛ばす
         location.href = Neo.config.security_url;
         return;
       }
@@ -1695,7 +1698,7 @@ Neo.submit = function (boardURL, blob, thumbnail, thumbnail2) {
                 );
               }
             }
-            var exitURL = Neo.getAbsoluteURL(boardURL, Neo.config.url_exit);
+            var exitURL = Neo.getAbsoluteURL(baseURL, Neo.config.url_exit);
             var responseURL = text.replace(/&amp;/g, "&");
 
             // ふたばではresponseの文字列をそのままURLとして解釈する
