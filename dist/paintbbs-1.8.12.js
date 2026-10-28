@@ -5571,19 +5571,9 @@
         container.addEventListener("mouseout", function(e) {
           ref._rollOutHandler(e);
         });
-        const touchPointers = /* @__PURE__ */ new Set();
-        const onTouchEnd = (e) => {
-          if (e.pointerType !== "touch") return;
-          touchPointers.delete(e.pointerId);
-          ref.touchlength = touchPointers.size;
-        };
         container.addEventListener(
-          "pointerdown",
+          "mousedown",
           function(e) {
-            if (e.pointerType === "touch") {
-              touchPointers.add(e.pointerId);
-              ref.touchlength = touchPointers.size;
-            }
             if (!(e.target instanceof Element)) return;
             const inSlider = e.target.closest(".colorSlider, .sizeSlider");
             if (ref.isWidget(e.target) && !inSlider) {
@@ -5594,9 +5584,26 @@
           { passive: false, capture: false }
         );
         container.addEventListener(
-          "pointerup",
+          "mouseup",
           function(e) {
-            onTouchEnd(e);
+            ref.touchlength = 0;
+            ref._mouseUpHandler(e);
+          },
+          { passive: false, capture: false }
+        );
+        container.addEventListener(
+          "touchstart",
+          function(e) {
+            var _a2;
+            ref.touchlength = (_a2 = e.touches) == null ? void 0 : _a2.length;
+            ref._mouseDownHandler(e);
+          },
+          { passive: false, capture: false }
+        );
+        container.addEventListener(
+          "touchend",
+          function(e) {
+            ref.touchlength = 0;
             ref._mouseUpHandler(e);
           },
           { passive: false, capture: false }
@@ -5624,7 +5631,7 @@
         container.addEventListener(
           "pointercancel",
           function(e) {
-            onTouchEnd(e);
+            ref.touchlength = 0;
             ref.isMouseDown = false;
             ref._mouseUpHandler(e);
           },
@@ -5914,7 +5921,7 @@
       }
     }
     /**
-     * @param {PointerEvent} e
+     * @param {MouseEvent|TouchEvent} e
      * @returns {void}
      */
     _mouseDownHandler(e) {
@@ -6007,7 +6014,7 @@
       this.tool.downHandler(this);
     }
     /**
-     * @param {PointerEvent} e
+     * @param {MouseEvent|TouchEvent} e
      */
     _mouseUpHandler(e) {
       this.isMouseDown = false;
@@ -6020,7 +6027,7 @@
       this._updateMousePosition(e);
     }
     /**
-     * @param {PointerEvent} e
+     * @param {PointerEvent|TouchEvent} e
      * @returns
      */
     _mouseMoveHandler(e) {
@@ -6040,11 +6047,14 @@
       }
     }
     /**
-     * @param {PointerEvent} e
+     * @param {MouseEvent|TouchEvent} e
      */
     getPosition(e) {
-      if (e instanceof PointerEvent && e.clientX !== void 0) {
+      if (e instanceof MouseEvent && e.clientX !== void 0) {
         return { x: e.clientX, y: e.clientY, e: e.type };
+      } else if (e instanceof TouchEvent) {
+        var touch = e.changedTouches[0];
+        return { x: touch.clientX, y: touch.clientY, e: e.type };
       } else {
         console.warn("Unknown event:", e.type);
         return { x: 0, y: 0, e: e.type || "unknown" };
@@ -6092,7 +6102,7 @@
     }
     /**
      * ポインターの位置を更新する
-     * @param {PointerEvent} e
+     * @param {MouseEvent|TouchEvent} e
      */
     _updateMousePosition(e) {
       var rect = this.destCanvas.getBoundingClientRect();

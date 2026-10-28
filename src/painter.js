@@ -528,22 +528,10 @@ export class Painter {
         ref._rollOutHandler(e);
       });
 
-      const touchPointers = new Set();
-      /**@param {PointerEvent} e */
-      const onTouchEnd = (e) => {
-        if (e.pointerType !== "touch") return;
-        touchPointers.delete(e.pointerId);
-        ref.touchlength = touchPointers.size;
-      };
       container.addEventListener(
-        "pointerdown",
+        "mousedown",
         function (e) {
-          if (e.pointerType === "touch") {
-            touchPointers.add(e.pointerId);
-            ref.touchlength = touchPointers.size;
-          }
           if (!(e.target instanceof Element)) return;
-
           //Slider以外のWidgetを除外
           const inSlider = e.target.closest(".colorSlider, .sizeSlider");
           if (ref.isWidget(e.target) && !inSlider) {
@@ -555,9 +543,25 @@ export class Painter {
         { passive: false, capture: false },
       );
       container.addEventListener(
-        "pointerup",
+        "mouseup",
         function (e) {
-          onTouchEnd(e);
+          ref.touchlength = 0;
+          ref._mouseUpHandler(e);
+        },
+        { passive: false, capture: false },
+      );
+      container.addEventListener(
+        "touchstart",
+        function (e) {
+          ref.touchlength = e.touches?.length;
+          ref._mouseDownHandler(e);
+        },
+        { passive: false, capture: false },
+      );
+      container.addEventListener(
+        "touchend",
+        function (e) {
+          ref.touchlength = 0;
           ref._mouseUpHandler(e);
         },
         { passive: false, capture: false },
@@ -594,7 +598,7 @@ export class Painter {
         "pointercancel",
         function (e) {
           //Eventがキャンセルされた時はUp時と同じ処理を行う
-          onTouchEnd(e);
+          ref.touchlength = 0;
           ref.isMouseDown = false;
           ref._mouseUpHandler(e);
         },
@@ -953,7 +957,7 @@ export class Painter {
     }
   }
   /**
-   * @param {PointerEvent} e
+   * @param {MouseEvent|TouchEvent} e
    * @returns {void}
    */
   _mouseDownHandler(e) {
@@ -1080,7 +1084,7 @@ export class Painter {
   }
 
   /**
-   * @param {PointerEvent} e
+   * @param {MouseEvent|TouchEvent} e
    */
   _mouseUpHandler(e) {
     this.isMouseDown = false;
@@ -1105,7 +1109,7 @@ export class Painter {
     //  }
   }
   /**
-   * @param {PointerEvent} e
+   * @param {PointerEvent|TouchEvent} e
    * @returns
    */
   _mouseMoveHandler(e) {
@@ -1136,11 +1140,23 @@ export class Painter {
   }
 
   /**
-   * @param {PointerEvent} e
+   * @param {MouseEvent|TouchEvent} e
    */
   getPosition(e) {
-    if (e instanceof PointerEvent && e.clientX !== undefined) {
+    if (e instanceof MouseEvent && e.clientX !== undefined) {
       return { x: e.clientX, y: e.clientY, e: e.type };
+    } else if (e instanceof TouchEvent) {
+      var touch = e.changedTouches[0];
+      return { x: touch.clientX, y: touch.clientY, e: e.type };
+
+      //      for (var i = 0; i < e.changedTouches.length; i++) {
+      //          var touch = e.changedTouches[i];
+      //          if (!this.touchModifier || this.touchModifier != touch.identifier) {
+      //              return {x: touch.clientX, y: touch.clientY, e: e.type};
+      //          }
+      //      }
+      //      console.log("getPosition error");
+      //      return {x:0, y:0};
     } else {
       console.warn("Unknown event:", e.type);
       return { x: 0, y: 0, e: e.type || "unknown" };
@@ -1204,7 +1220,7 @@ export class Painter {
   }
   /**
    * ポインターの位置を更新する
-   * @param {PointerEvent} e
+   * @param {MouseEvent|TouchEvent} e
    */
   _updateMousePosition(e) {
     var rect = this.destCanvas.getBoundingClientRect();
