@@ -1,4 +1,4 @@
-/*! PaintBBS NEO v1.8.11 | https://github.com/funige/neo */
+/*! PaintBBS NEO v1.8.12 | https://github.com/funige/neo */
 /*! Includes this MIT-licensed library (the license below applies only to it):
  *
  *   lz-string (https://github.com/pieroxy/lz-string)
@@ -535,7 +535,7 @@
 
   // src/neo.js
   var Neo = {};
-  Neo.version = "1.8.11";
+  Neo.version = "1.8.12";
   Neo.painter;
   Neo.fullScreen = false;
   Neo.uploaded = false;
@@ -5571,35 +5571,32 @@
         container.addEventListener("mouseout", function(e) {
           ref._rollOutHandler(e);
         });
+        const touchPointers = /* @__PURE__ */ new Set();
+        const onTouchEnd = (e) => {
+          if (e.pointerType !== "touch") return;
+          touchPointers.delete(e.pointerId);
+          ref.touchlength = touchPointers.size;
+        };
         container.addEventListener(
-          "mousedown",
-          //pointerdownに変更するとここが先にトリガーされ、線幅を保存できなくなる
+          "pointerdown",
           function(e) {
+            if (e.pointerType === "touch") {
+              touchPointers.add(e.pointerId);
+              ref.touchlength = touchPointers.size;
+            }
+            if (!(e.target instanceof Element)) return;
+            const inSlider = e.target.closest(".colorSlider, .sizeSlider");
+            if (ref.isWidget(e.target) && !inSlider) {
+              return;
+            }
             ref._mouseDownHandler(e);
           },
           { passive: false, capture: false }
         );
         container.addEventListener(
-          "mouseup",
+          "pointerup",
           function(e) {
-            ref.touchlength = 0;
-            ref._mouseUpHandler(e);
-          },
-          { passive: false, capture: false }
-        );
-        container.addEventListener(
-          "touchstart",
-          function(e) {
-            var _a2;
-            ref.touchlength = (_a2 = e.touches) == null ? void 0 : _a2.length;
-            ref._mouseDownHandler(e);
-          },
-          { passive: false, capture: false }
-        );
-        container.addEventListener(
-          "touchend",
-          function(e) {
-            ref.touchlength = 0;
+            onTouchEnd(e);
             ref._mouseUpHandler(e);
           },
           { passive: false, capture: false }
@@ -5627,7 +5624,7 @@
         container.addEventListener(
           "pointercancel",
           function(e) {
-            ref.touchlength = 0;
+            onTouchEnd(e);
             ref.isMouseDown = false;
             ref._mouseUpHandler(e);
           },
@@ -5843,9 +5840,12 @@
       if (this.tool.keyDownHandler) {
         this.tool.keyDownHandler(e);
       }
-      if (target === this.inputText) {
-        preventCtrlKeyDefaults(e);
-        return;
+      if (this.tool === this.textTool) {
+        if (this.inputText instanceof HTMLElement && this.inputText.style.display === "block") {
+          this.inputText.focus();
+          preventCtrlKeyDefaults(e);
+          return;
+        }
       }
       e.preventDefault();
       if (!this.isShiftDown && this.isCtrlDown) {
@@ -5914,7 +5914,7 @@
       }
     }
     /**
-     * @param {MouseEvent|TouchEvent} e
+     * @param {PointerEvent} e
      * @returns {void}
      */
     _mouseDownHandler(e) {
@@ -6007,7 +6007,7 @@
       this.tool.downHandler(this);
     }
     /**
-     * @param {MouseEvent|TouchEvent} e
+     * @param {PointerEvent} e
      */
     _mouseUpHandler(e) {
       this.isMouseDown = false;
@@ -6020,7 +6020,7 @@
       this._updateMousePosition(e);
     }
     /**
-     * @param {PointerEvent|TouchEvent} e
+     * @param {PointerEvent} e
      * @returns
      */
     _mouseMoveHandler(e) {
@@ -6040,14 +6040,11 @@
       }
     }
     /**
-     * @param {MouseEvent|TouchEvent} e
+     * @param {PointerEvent} e
      */
     getPosition(e) {
-      if (e instanceof MouseEvent && e.clientX !== void 0) {
+      if (e instanceof PointerEvent && e.clientX !== void 0) {
         return { x: e.clientX, y: e.clientY, e: e.type };
-      } else if (e instanceof TouchEvent) {
-        var touch = e.changedTouches[0];
-        return { x: touch.clientX, y: touch.clientY, e: e.type };
       } else {
         console.warn("Unknown event:", e.type);
         return { x: 0, y: 0, e: e.type || "unknown" };
@@ -6095,7 +6092,7 @@
     }
     /**
      * ポインターの位置を更新する
-     * @param {MouseEvent|TouchEvent} e
+     * @param {PointerEvent} e
      */
     _updateMousePosition(e) {
       var rect = this.destCanvas.getBoundingClientRect();
@@ -6171,7 +6168,7 @@
       y = y === void 0 ? 0 : y;
       w = w === void 0 ? this.canvasWidth : w;
       h = h === void 0 ? this.canvasHeight : h;
-      var undoItem = new UndoItem();
+      const undoItem = new UndoItem();
       undoItem.x = 0;
       undoItem.y = 0;
       undoItem.width = w;
@@ -6201,7 +6198,7 @@
       y = y === void 0 ? 0 : y;
       w = w === void 0 ? this.canvasWidth : w;
       h = h === void 0 ? this.canvasHeight : h;
-      var undoItem = new UndoItem();
+      const undoItem = new UndoItem();
       undoItem.x = 0;
       undoItem.y = 0;
       undoItem.width = w;

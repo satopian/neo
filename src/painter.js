@@ -527,34 +527,37 @@ export class Painter {
       container.addEventListener("mouseout", function (e) {
         ref._rollOutHandler(e);
       });
-      // 先にNeo.Buttonのtouchstart()がトリガーされる
+
+      const touchPointers = new Set();
+      /**@param {PointerEvent} e */
+      const onTouchEnd = (e) => {
+        if (e.pointerType !== "touch") return;
+        touchPointers.delete(e.pointerId);
+        ref.touchlength = touchPointers.size;
+      };
       container.addEventListener(
-        "mousedown", //pointerdownに変更するとここが先にトリガーされ、線幅を保存できなくなる
+        "pointerdown",
         function (e) {
+          if (e.pointerType === "touch") {
+            touchPointers.add(e.pointerId);
+            ref.touchlength = touchPointers.size;
+          }
+          if (!(e.target instanceof Element)) return;
+
+          //Slider以外のWidgetを除外
+          const inSlider = e.target.closest(".colorSlider, .sizeSlider");
+          if (ref.isWidget(e.target) && !inSlider) {
+            return;
+          }
+
           ref._mouseDownHandler(e);
         },
         { passive: false, capture: false },
       );
       container.addEventListener(
-        "mouseup",
+        "pointerup",
         function (e) {
-          ref.touchlength = 0;
-          ref._mouseUpHandler(e);
-        },
-        { passive: false, capture: false },
-      );
-      container.addEventListener(
-        "touchstart",
-        function (e) {
-          ref.touchlength = e.touches?.length;
-          ref._mouseDownHandler(e);
-        },
-        { passive: false, capture: false },
-      );
-      container.addEventListener(
-        "touchend",
-        function (e) {
-          ref.touchlength = 0;
+          onTouchEnd(e);
           ref._mouseUpHandler(e);
         },
         { passive: false, capture: false },
@@ -591,7 +594,7 @@ export class Painter {
         "pointercancel",
         function (e) {
           //Eventがキャンセルされた時はUp時と同じ処理を行う
-          ref.touchlength = 0;
+          onTouchEnd(e);
           ref.isMouseDown = false;
           ref._mouseUpHandler(e);
         },
@@ -850,11 +853,16 @@ export class Painter {
     if (this.tool.keyDownHandler) {
       this.tool.keyDownHandler(e);
     }
-
     //テキスト入力をしている時はキーボードショートカットキーを使用しないため早期return
-    if (target === this.inputText) {
-      preventCtrlKeyDefaults(e);
-      return;
+    if (this.tool === this.textTool) {
+      if (
+        this.inputText instanceof HTMLElement &&
+        this.inputText.style.display === "block"
+      ) {
+        this.inputText.focus();
+        preventCtrlKeyDefaults(e);
+        return;
+      }
     }
 
     //スペースキーでスクロールしないようにする
@@ -945,7 +953,7 @@ export class Painter {
     }
   }
   /**
-   * @param {MouseEvent|TouchEvent} e
+   * @param {PointerEvent} e
    * @returns {void}
    */
   _mouseDownHandler(e) {
@@ -1072,7 +1080,7 @@ export class Painter {
   }
 
   /**
-   * @param {MouseEvent|TouchEvent} e
+   * @param {PointerEvent} e
    */
   _mouseUpHandler(e) {
     this.isMouseDown = false;
@@ -1097,7 +1105,7 @@ export class Painter {
     //  }
   }
   /**
-   * @param {PointerEvent|TouchEvent} e
+   * @param {PointerEvent} e
    * @returns
    */
   _mouseMoveHandler(e) {
@@ -1128,23 +1136,11 @@ export class Painter {
   }
 
   /**
-   * @param {MouseEvent|TouchEvent} e
+   * @param {PointerEvent} e
    */
   getPosition(e) {
-    if (e instanceof MouseEvent && e.clientX !== undefined) {
+    if (e instanceof PointerEvent && e.clientX !== undefined) {
       return { x: e.clientX, y: e.clientY, e: e.type };
-    } else if (e instanceof TouchEvent) {
-      var touch = e.changedTouches[0];
-      return { x: touch.clientX, y: touch.clientY, e: e.type };
-
-      //      for (var i = 0; i < e.changedTouches.length; i++) {
-      //          var touch = e.changedTouches[i];
-      //          if (!this.touchModifier || this.touchModifier != touch.identifier) {
-      //              return {x: touch.clientX, y: touch.clientY, e: e.type};
-      //          }
-      //      }
-      //      console.log("getPosition error");
-      //      return {x:0, y:0};
     } else {
       console.warn("Unknown event:", e.type);
       return { x: 0, y: 0, e: e.type || "unknown" };
@@ -1208,7 +1204,7 @@ export class Painter {
   }
   /**
    * ポインターの位置を更新する
-   * @param {MouseEvent|TouchEvent} e
+   * @param {PointerEvent} e
    */
   _updateMousePosition(e) {
     var rect = this.destCanvas.getBoundingClientRect();
@@ -1308,7 +1304,7 @@ export class Painter {
     y = y === undefined ? 0 : y;
     w = w === undefined ? this.canvasWidth : w;
     h = h === undefined ? this.canvasHeight : h;
-    var undoItem = new UndoItem();
+    const undoItem = new UndoItem();
     undoItem.x = 0;
     undoItem.y = 0;
     undoItem.width = w;
@@ -1340,7 +1336,7 @@ export class Painter {
     y = y === undefined ? 0 : y;
     w = w === undefined ? this.canvasWidth : w;
     h = h === undefined ? this.canvasHeight : h;
-    var undoItem = new UndoItem();
+    const undoItem = new UndoItem();
     undoItem.x = 0;
     undoItem.y = 0;
     undoItem.width = w;
@@ -4292,7 +4288,7 @@ export class UndoItem {
 /**
  * Undo/Redo履歴を管理するマネージャー。
  * @description
- * 描画操作のスナップショット（Neo.UndoItem）をスタックとして保持する。
+ * 描画操作のスナップショット（UndoItem）をスタックとして保持する。
  * 最大ステップ数（_maxStep）を設定することで、メモリの肥大化を抑制しつつ
  * ユーザーの操作履歴を安全に管理する。
  */
