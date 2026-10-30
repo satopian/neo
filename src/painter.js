@@ -241,6 +241,10 @@ export class Painter {
     this.ellipseFillTool;
     this.blurRectTool;
     this.turnTool;
+
+    const commands = new Commands();
+    this.zoomPlusCommand = new commands.ZoomPlusCommand(this); // +
+    this.zoomMinusCommand = new commands.ZoomMinusCommand(this); // -
   }
 
   /**
@@ -889,9 +893,8 @@ export class Painter {
       }
     }
     if (!this.isShiftDown && !this.isCtrlDown && !this.isAltDown) {
-      const commands = new Commands();
-      if (key == "+") new commands.ZoomPlusCommand(this).execute(); // +
-      if (key == "-") new commands.ZoomMinusCommand(this).execute(); // -
+      if (key == "+") this.zoomPlusCommand.execute(); // +
+      if (key == "-") this.zoomMinusCommand.execute(); // -
       //鉛筆
       if (key == "b") this.setToolByType(Painter.TOOLTYPE_PEN);
       //水彩

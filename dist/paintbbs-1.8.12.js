@@ -5309,6 +5309,9 @@
       this.ellipseFillTool;
       this.blurRectTool;
       this.turnTool;
+      const commands = new Commands();
+      this.zoomPlusCommand = new commands.ZoomPlusCommand(this);
+      this.zoomMinusCommand = new commands.ZoomMinusCommand(this);
     }
     /**
      * ペインターの描画コンポーネントを初期化して、描画可能な状態にする。
@@ -5867,9 +5870,8 @@
         }
       }
       if (!this.isShiftDown && !this.isCtrlDown && !this.isAltDown) {
-        const commands = new Commands();
-        if (key == "+") new commands.ZoomPlusCommand(this).execute();
-        if (key == "-") new commands.ZoomMinusCommand(this).execute();
+        if (key == "+") this.zoomPlusCommand.execute();
+        if (key == "-") this.zoomMinusCommand.execute();
         if (key == "b") this.setToolByType(_Painter.TOOLTYPE_PEN);
         if (key == "w") this.setToolByType(_Painter.TOOLTYPE_BRUSH);
         if (key == "e") this.setToolByType(_Painter.TOOLTYPE_ERASER);
